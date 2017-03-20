@@ -46,7 +46,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Scripts\Football.cs" />
      <Compile Include="Assets\Scripts\FootballPlayer.cs" />
+     <Compile Include="Assets\Scripts\FootballPlayerSpawner.cs" />
      <Compile Include="Assets\Scripts\GameManager.cs" />
      <None Include="Assets\Standard Assets\Environment\Water\Water4\Shaders\FXWater4Simple.shader" />
      <None Include="Assets\Standard Assets\Environment\Water (Basic)\Shaders\FXWaterBasic.shader" />

@@ -82,7 +82,9 @@
 -define:UNITY_TEAM_LICENSE
 -define:UNITY_PRO_LICENSE
 -define:CROSS_PLATFORM_INPUT
+'Assets/Scripts/Football.cs'
 'Assets/Scripts/FootballPlayer.cs'
+'Assets/Scripts/FootballPlayerSpawner.cs'
 'Assets/Scripts/GameManager.cs'
 -r:'/Applications/Unity/Unity.app/Contents/MonoBleedingEdge/lib/mono/unity/System.Runtime.Serialization.dll'
 -r:'/Applications/Unity/Unity.app/Contents/MonoBleedingEdge/lib/mono/unity/System.Xml.Linq.dll'

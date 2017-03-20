@@ -8,7 +8,8 @@ public class FootballPlayer : MonoBehaviour
 	private Rigidbody m_RigidBody = null;
 	bool mCanImpulseOnDirectionChange = true;
 	float mTimeUntilCanImpulse = 0.1f;
-	bool mIsPlayerControlled = true;
+	private bool mIsPlayerControlled = true;
+	private bool mIsFriendlyTeamPlayer = true;
 
 	void Start () 
 	{
@@ -16,26 +17,22 @@ public class FootballPlayer : MonoBehaviour
 		m_CurrentDirection.y = 0;
 		m_CurrentDirection.z = 1;
 
-		m_CurrentSpeed = 800.0f;
+		m_CurrentSpeed = 300.0f;
 	}
 
 	void Update() 
 	{
-		if (m_RigidBody) 
-		{
-			m_RigidBody.AddForce (m_CurrentDirection * m_CurrentSpeed);
-
-			// if (m_RigidBody.velocity.sqrMagnitude < 200)
-			{
-			}
-		} 
-		else
-		{
-			m_RigidBody = GetComponent<Rigidbody> ();
-		}
-
 		if (mIsPlayerControlled)
 		{
+			if (m_RigidBody) 
+			{
+				m_RigidBody.AddForce (m_CurrentDirection * m_CurrentSpeed);
+			} 
+			else
+			{
+				m_RigidBody = GetComponent<Rigidbody> ();
+			}
+
 			if (!mCanImpulseOnDirectionChange)
 			{
 				mTimeUntilCanImpulse -= Time.deltaTime;
@@ -46,6 +43,16 @@ public class FootballPlayer : MonoBehaviour
 				}
 			}
 		}
+	}
+
+	public void SetPlayerControlled(bool value)
+	{
+		mIsPlayerControlled = value;
+	}
+
+	public void SetIsFriendlyTeamPlayer (bool value)
+	{
+		mIsFriendlyTeamPlayer = value;
 	}
 
 	public static implicit operator FootballPlayer(Collider v)
@@ -60,9 +67,9 @@ public class FootballPlayer : MonoBehaviour
 
 		if (mCanImpulseOnDirectionChange)
 		{
-			m_RigidBody.AddForce (m_CurrentDirection * (m_CurrentSpeed * 0.75f), ForceMode.Impulse);
+			m_RigidBody.AddForce (m_CurrentDirection * (m_CurrentSpeed * 0.1f), ForceMode.Impulse);
 			mCanImpulseOnDirectionChange = false;
-			mTimeUntilCanImpulse = 2.0f;
+			mTimeUntilCanImpulse = 0.5f;
 		}
 	}
 }

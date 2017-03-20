@@ -5,8 +5,9 @@ using UnityEngine;
 public class GameManager : MonoBehaviour 
 {
 	public Camera m_Camera = null;
-	public FootballPlayer m_TestPlayer = null;
-	private static GameManager m_Instance;						// Damien : Making GameManager a singleton
+	private static GameManager m_Instance;
+	public Football m_Football = null;
+	public FootballPlayer m_CurrentSelectedPlayer = null;
 
 	private float m_CameraZOffset = -7.0f;
 	private float m_CameraYOffset = 10.0f;
@@ -52,7 +53,7 @@ public class GameManager : MonoBehaviour
 
 	void TakeInput()
 	{
-		if (m_TestPlayer == null) 
+		if (m_CurrentSelectedPlayer == null) 
 		{
 			return;
 		}
@@ -91,10 +92,10 @@ public class GameManager : MonoBehaviour
 
 			if (Physics.Raycast(rr, out hit) )
 			{
-				Vector3 diff =  hit.point - m_TestPlayer.transform.position;
+				Vector3 diff =  hit.point - m_CurrentSelectedPlayer.transform.position;
 				diff.Normalize ();
 
-				m_TestPlayer.SetDirection (diff.x, diff.z);
+				m_CurrentSelectedPlayer.SetDirection (diff.x, diff.z);
 			}
 		}
 	}
@@ -106,75 +107,16 @@ public class GameManager : MonoBehaviour
 			return;
 		}
 
-		if (m_TestPlayer == null)
+		if (m_CurrentSelectedPlayer == null)
 		{
 			return;
 		}
 
 		Vector3 position = m_Camera.transform.position;
-		position.x = m_TestPlayer.transform.position.x;
+		position.x = m_CurrentSelectedPlayer.transform.position.x;
 		position.y = m_CameraYOffset;
-		position.z = m_TestPlayer.transform.position.z + m_CameraZOffset;
+		position.z = m_CurrentSelectedPlayer.transform.position.z + m_CameraZOffset;
 
 		m_Camera.transform.position = position;
-				
-		/*
-	private void FindAveragePosition()
-	{
-		Vector3 averagePos = new Vector3();
-		int numTargets = 0;
-
-		for (int i = 0; i < m_Targets.Length; i++)
-		{
-			if (!m_Targets[i].gameObject.activeSelf)
-				continue;
-
-			averagePos += m_Targets[i].position;
-			numTargets++;
-		}
-
-		if (numTargets > 0)
-			averagePos /= numTargets;
-
-		averagePos.y = transform.position.y;
-
-		m_DesiredPosition = averagePos;
-	}
-
-
-	private void Zoom()
-	{
-		float requiredSize = FindRequiredSize();
-		m_Camera.orthographicSize = Mathf.SmoothDamp(m_Camera.orthographicSize, requiredSize, ref m_ZoomSpeed, m_DampTime);
-	}
-
-
-	private float FindRequiredSize()
-	{
-		Vector3 desiredLocalPos = transform.InverseTransformPoint(m_DesiredPosition);
-
-		float size = 0f;
-
-		for (int i = 0; i < m_Targets.Length; i++)
-		{
-			if (!m_Targets[i].gameObject.activeSelf)
-				continue;
-
-			Vector3 targetLocalPos = transform.InverseTransformPoint(m_Targets[i].position);
-
-			Vector3 desiredPosToTarget = targetLocalPos - desiredLocalPos;
-
-			size = Mathf.Max (size, Mathf.Abs (desiredPosToTarget.y));
-
-			size = Mathf.Max (size, Mathf.Abs (desiredPosToTarget.x) / m_Camera.aspect);
-		}
-
-		size += m_ScreenEdgeBuffer;
-
-		size = Mathf.Max(size, m_MinSize);
-
-		return size;
-	}
-	*/
 	}
 }
