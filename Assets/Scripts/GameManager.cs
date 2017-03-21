@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
 
 	private float m_CameraZOffset = -7.0f;
 	private float m_CameraYOffset = 10.0f;
+	private float m_TimeLeftUntilCanSwitchPlayer = 3.0f;
 
 	private bool m_IsSetup = false;
 	private FootballPlayer m_CurrentSelectedPlayer = null;
@@ -87,6 +88,8 @@ public class GameManager : MonoBehaviour
 		UpdateCamera ();
 
 		ApplyBallControlAid ();
+
+		UpdateCurrentPlayer ();
 	}
 
 	void TakeInput()
@@ -150,12 +153,14 @@ public class GameManager : MonoBehaviour
 			return;
 		}
 
-		Vector3 position = m_Camera.transform.position;
-		position.x = m_CurrentSelectedPlayer.transform.position.x;
-		position.y = m_CameraYOffset;
-		position.z = m_CurrentSelectedPlayer.transform.position.z + m_CameraZOffset;
+		Vector3 desiredPosition = m_Camera.transform.position;
+		desiredPosition.x = m_CurrentSelectedPlayer.transform.position.x;
+		desiredPosition.y = m_CameraYOffset;
+		desiredPosition.z = m_CurrentSelectedPlayer.transform.position.z + m_CameraZOffset;
 
-		m_Camera.transform.position = position;
+		Vector3 pos = Vector3.MoveTowards (m_Camera.transform.position, desiredPosition, 1.0f);
+
+		m_Camera.transform.position = pos;
 	}
 
 	FootballPlayer GetClosestFriendlyPlayerToBall()
@@ -220,5 +225,62 @@ public class GameManager : MonoBehaviour
 				// rb.transform.forward = Vector3.RotateTowards (rb.transform.forward, m_CurrentSelectedPlayer.transform.forward, 1.0f, 1.0f);
 			}
 		}
+	}
+
+	void UpdateCurrentPlayer()
+	{
+		if (m_TimeLeftUntilCanSwitchPlayer > 0.0f)
+		{
+			m_TimeLeftUntilCanSwitchPlayer -= Time.deltaTime;
+		}
+
+		if (!m_CurrentSelectedPlayer) {
+			m_CurrentSelectedPlayer = GetClosestFriendlyPlayerToBall ();
+
+			if (m_CurrentSelectedPlayer) {
+				m_CurrentSelectedPlayer.SetPlayerControlled (true);
+			}
+		} 
+		else
+		{
+			if (m_TimeLeftUntilCanSwitchPlayer > 0.0f)
+			{
+				return;
+			}
+
+			// if the current player is too far away from the ball then select a new player
+			Vector3 diff = m_Football.transform.position - m_CurrentSelectedPlayer.transform.position;
+
+			float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
+
+			if (magSqrAbs > 300) 
+			{
+				// pick new player
+				float smallestDistance = -1.0f;
+
+				foreach (FootballPlayer p in mFriendlyTeam)
+				{
+					if (p == m_CurrentSelectedPlayer)
+					{
+						continue;
+					}
+
+					Vector3 diffP = m_Football.transform.position - p.transform.position;
+
+					float magSqrAbsP = Mathf.Abs (diffP.sqrMagnitude);
+
+					if (smallestDistance == -1 ||
+						magSqrAbsP < smallestDistance)
+					{
+						m_CurrentSelectedPlayer.SetPlayerControlled (false);
+						smallestDistance = magSqrAbsP;
+						m_CurrentSelectedPlayer = p;
+						m_CurrentSelectedPlayer.SetPlayerControlled (true);
+
+						m_TimeLeftUntilCanSwitchPlayer = 3.0f;
+					}
+				}
+			}
+		}	
 	}
 }
