@@ -197,7 +197,7 @@ public class GameManager : MonoBehaviour
 			return;
 		}
 
-		if (m_Football.transform.position.z - 15 > m_CurrentSelectedPlayer.transform.position.z)
+		if (m_Football.transform.position.z - 8 > m_CurrentSelectedPlayer.transform.position.z)
 		{
 			// the ball is on front of the player so don't suck the ball in (we want it to go forward)
 			return;
@@ -207,7 +207,7 @@ public class GameManager : MonoBehaviour
 
 		float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
 
-		if (magSqrAbs < 150)
+		if (magSqrAbs < 100)
 		{
 			// suck the ball gently towards the player
 			Rigidbody rb = m_Football.GetComponent<Rigidbody>();
@@ -215,7 +215,7 @@ public class GameManager : MonoBehaviour
 			if (rb)
 			{
 				diff.Normalize ();
-				rb.AddForce (diff * -1.8f);
+				rb.AddForce (diff * -0.5f);
 
 				// rb.transform.forward = Vector3.RotateTowards (rb.transform.forward, m_CurrentSelectedPlayer.transform.forward, 1.0f, 1.0f);
 			}

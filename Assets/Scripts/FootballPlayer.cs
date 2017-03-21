@@ -26,7 +26,7 @@ public class FootballPlayer : MonoBehaviour
 		{
 			if (m_RigidBody) 
 			{
-				m_RigidBody.transform.forward = Vector3.RotateTowards (m_RigidBody.transform.forward, m_DesiredDirection, 0.2f, 0.1f); //new Vector3(m_DesiredDirection.x, m_DesiredDirection.y, m_DesiredDirection.z);
+				m_RigidBody.transform.forward = Vector3.RotateTowards (m_RigidBody.transform.forward, m_DesiredDirection, 0.1f, 0.75f);
 
 				if (m_RigidBody.velocity.sqrMagnitude < 100.0f)
 				{
