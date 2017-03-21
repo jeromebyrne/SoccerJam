@@ -7,12 +7,15 @@ public class GameManager : MonoBehaviour
 	public Camera m_Camera = null;
 	private static GameManager m_Instance;
 	public Football m_Football = null;
-	public FootballPlayer m_CurrentSelectedPlayer = null;
 
 	private float m_CameraZOffset = -7.0f;
 	private float m_CameraYOffset = 10.0f;
 
 	private bool m_IsSetup = false;
+	private FootballPlayer m_CurrentSelectedPlayer = null;
+
+	List<FootballPlayer> mFriendlyTeam = new List<FootballPlayer>();
+	List<FootballPlayer> mOppositionTeam = new List<FootballPlayer>();
 
 	public static GameManager Instance
 	{
@@ -26,14 +29,34 @@ public class GameManager : MonoBehaviour
 		}
 	}
 
+	void RebuildTeams()
+	{
+		mFriendlyTeam.Clear();
+		mOppositionTeam.Clear();
+
+		FootballPlayer[] players = FindObjectsOfType<FootballPlayer> ();
+
+		foreach(FootballPlayer p in players)
+		{
+			if (p.IsFriendlyTeamPlayer ()) 
+			{
+				mFriendlyTeam.Add (p);
+			} 
+			else 
+			{
+				mOppositionTeam.Add (p);
+			}
+		}
+	}
+
 	void Start () 
 	{
-		m_Instance = this;	// Hacky singleton
-
+		m_Instance = this;	
 	}
 
 	void DoSetup()
 	{
+		
 	}
 
 	void Update () 
@@ -46,9 +69,24 @@ public class GameManager : MonoBehaviour
 			return;
 		}
 
+		if (mFriendlyTeam.Count == 0 || mOppositionTeam.Count == 0)
+		{
+			// intitial build
+			RebuildTeams ();
+
+			m_CurrentSelectedPlayer = GetClosestFriendlyPlayerToBall ();
+
+			if (m_CurrentSelectedPlayer)
+			{
+				m_CurrentSelectedPlayer.SetPlayerControlled (true);
+			}
+		}
+
 		TakeInput ();
 
 		UpdateCamera ();
+
+		ApplyBallControlAid ();
 	}
 
 	void TakeInput()
@@ -118,5 +156,69 @@ public class GameManager : MonoBehaviour
 		position.z = m_CurrentSelectedPlayer.transform.position.z + m_CameraZOffset;
 
 		m_Camera.transform.position = position;
+	}
+
+	FootballPlayer GetClosestFriendlyPlayerToBall()
+	{
+		if (m_Football == null)
+		{
+			return null;
+		}
+
+		float smallestDistance = -1.0f;
+		FootballPlayer selectedPlayer = null;
+
+		foreach (FootballPlayer p in mFriendlyTeam)
+		{
+			Vector3 diff = m_Football.transform.position - p.transform.position;
+
+			float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
+
+			if (smallestDistance == -1 ||
+				magSqrAbs < smallestDistance)
+			{
+				smallestDistance = magSqrAbs;
+				selectedPlayer = p;
+			}
+		}
+
+		return selectedPlayer;
+	}
+
+	void ApplyBallControlAid()
+	{
+		if (m_CurrentSelectedPlayer == null)
+		{
+			return;
+		}
+
+		if (m_Football == null)
+		{
+			return;
+		}
+
+		if (m_Football.transform.position.z - 15 > m_CurrentSelectedPlayer.transform.position.z)
+		{
+			// the ball is on front of the player so don't suck the ball in (we want it to go forward)
+			return;
+		}
+
+		Vector3 diff = m_Football.transform.position - m_CurrentSelectedPlayer.transform.position;
+
+		float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
+
+		if (magSqrAbs < 150)
+		{
+			// suck the ball gently towards the player
+			Rigidbody rb = m_Football.GetComponent<Rigidbody>();
+
+			if (rb)
+			{
+				diff.Normalize ();
+				rb.AddForce (diff * -1.8f);
+
+				// rb.transform.forward = Vector3.RotateTowards (rb.transform.forward, m_CurrentSelectedPlayer.transform.forward, 1.0f, 1.0f);
+			}
+		}
 	}
 }
