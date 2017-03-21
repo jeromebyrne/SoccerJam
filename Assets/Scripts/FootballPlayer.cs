@@ -13,8 +13,8 @@ public class FootballPlayer : MonoBehaviour
 	private bool mIsFriendlyTeamPlayer = true;
 	private Vector3 m_InitialPosition;
 
-	private const float kPlayerSpeed = 500.0f;
-	private const float kOppositionSpeed = 100.0f;
+	private const float kPlayerSpeed = 475.0f;
+	private const float kOppositionSpeed = 1.0f;
 
 	void Start () 
 	{
@@ -33,7 +33,7 @@ public class FootballPlayer : MonoBehaviour
 			{
 				m_RigidBody.transform.forward = Vector3.RotateTowards (m_RigidBody.transform.forward, m_DesiredDirection, 0.1f, 0.75f);
 
-				if (m_RigidBody.velocity.sqrMagnitude < (mIsFriendlyTeamPlayer ? 100.0f : 70.0f))
+				if (m_RigidBody.velocity.sqrMagnitude < (mIsFriendlyTeamPlayer ? 90.0f : 20.0f))
 				{
 					m_RigidBody.AddForce (m_RigidBody.transform.forward * m_CurrentSpeed);
 				}
@@ -85,7 +85,7 @@ public class FootballPlayer : MonoBehaviour
 		} else {
 			m_CurrentSpeed = kOppositionSpeed;
 
-			GetComponent<Rigidbody> ().mass = 35.0f;
+			GetComponent<Rigidbody> ().mass = 80.0f;
 		}
 	}
 
@@ -109,7 +109,7 @@ public class FootballPlayer : MonoBehaviour
 
 		if (mCanImpulseOnDirectionChange)
 		{
-			// m_RigidBody.AddForce (m_CurrentDirection * (m_CurrentSpeed * 0.1f), ForceMode.Impulse);
+			// m_RigidBody.AddForce (m_DesiredDirection * (m_CurrentSpeed * 0.1f), ForceMode.Impulse);
 			mCanImpulseOnDirectionChange = false;
 			mTimeUntilCanImpulse = 0.5f;
 		}

@@ -8,8 +8,8 @@ public class GameManager : MonoBehaviour
 	private static GameManager m_Instance;
 	public Football m_Football = null;
 
-	private float m_CameraZOffset = -7.0f;
-	private float m_CameraYOffset = 10.0f;
+	private float m_CameraZOffset = -11.0f;
+	private float m_CameraYOffset = 15.0f;
 	private float m_TimeLeftUntilCanSwitchPlayer = 3.0f;
 
 	private bool m_IsSetup = false;
@@ -18,6 +18,11 @@ public class GameManager : MonoBehaviour
 
 	List<FootballPlayer> mFriendlyTeam = new List<FootballPlayer>();
 	List<FootballPlayer> mOppositionTeam = new List<FootballPlayer>();
+
+	const float kShootHoldMinTime = 0.3f;
+	const float kShootHoldMaxTime = 1.5f;
+
+	private float m_TimePressedDown = 0.0f;
 
 	public static GameManager Instance
 	{
@@ -139,18 +144,57 @@ public class GameManager : MonoBehaviour
 			
 		if (Input.GetMouseButtonDown(0))
 		{
+			m_TimePressedDown = Time.time;
+
 			RaycastHit hit;
 
 			Ray rr = m_Camera.ScreenPointToRay (Input.mousePosition);
 
 			if (Physics.Raycast(rr, out hit) )
 			{
-				Vector3 diff =  hit.point - m_CurrentSelectedPlayer.transform.position;
+				Vector3 diff =  hit.point - m_CurrentSelectedPlayer.GetComponent<Rigidbody>().transform.position;
 				diff.Normalize ();
 
 				m_CurrentSelectedPlayer.SetDirection (diff.x, diff.z);
 			}
 		}
+		else if (Input.GetMouseButtonUp(0))
+		{
+			float timeSincePressed = Time.time - m_TimePressedDown;
+
+			if (timeSincePressed > kShootHoldMinTime)
+			{
+				if (timeSincePressed > kShootHoldMaxTime)
+				{
+					timeSincePressed = kShootHoldMaxTime;
+				}
+
+				float percentageForce = timeSincePressed / kShootHoldMaxTime;
+				Vector3 diff = m_Football.GetComponent<Rigidbody>().transform.position - m_CurrentSelectedPlayer.GetComponent<Rigidbody>().transform.position;
+
+				float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
+
+				// jump
+				m_CurrentSelectedPlayer.GetComponent<Rigidbody>().AddForce(new Vector3(0,600 * percentageForce,0), ForceMode.Impulse);
+
+				if (magSqrAbs < 15)
+				{
+					ShootBall(10.0f * percentageForce, m_CurrentSelectedPlayer.GetComponent<Rigidbody>().transform.forward);
+
+					m_TimeLeftUntilCanSwitchPlayer = 0.0f;
+				}
+			}
+		}
+	}
+
+	void ShootBall(float force, Vector3 direction)
+	{
+		if (!m_Football)
+		{
+			return;
+		}
+			
+		m_Football.GetComponent<Rigidbody> ().AddForce (direction * force, ForceMode.Impulse);
 	}
 
 	void UpdateCamera ()
@@ -166,9 +210,9 @@ public class GameManager : MonoBehaviour
 		}
 
 		Vector3 desiredPosition = m_Camera.transform.position;
-		desiredPosition.x = m_CurrentSelectedPlayer.transform.position.x;
+		desiredPosition.x = m_CurrentSelectedPlayer.GetComponent<Rigidbody>().transform.position.x;
 		desiredPosition.y = m_CameraYOffset;
-		desiredPosition.z = m_CurrentSelectedPlayer.transform.position.z + m_CameraZOffset;
+		desiredPosition.z = m_CurrentSelectedPlayer.GetComponent<Rigidbody>().transform.position.z + m_CameraZOffset;
 
 		Vector3 pos = Vector3.MoveTowards (m_Camera.transform.position, desiredPosition, 1.0f);
 
@@ -187,7 +231,7 @@ public class GameManager : MonoBehaviour
 
 		foreach (FootballPlayer p in mFriendlyTeam)
 		{
-			Vector3 diff = m_Football.transform.position - p.transform.position;
+			Vector3 diff = m_Football.GetComponent<Rigidbody>().transform.position - p.transform.position;
 
 			float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
 
@@ -214,7 +258,7 @@ public class GameManager : MonoBehaviour
 
 		foreach (FootballPlayer p in mOppositionTeam)
 		{
-			Vector3 diff = m_Football.transform.position - p.transform.position;
+			Vector3 diff = m_Football.GetComponent<Rigidbody>().transform.position - p.GetComponent<Rigidbody>().transform.position;
 
 			float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
 
@@ -242,18 +286,18 @@ public class GameManager : MonoBehaviour
 		}
 
 		float attractRepelValue = -1.5f;
-		if (m_Football.transform.position.z > m_CurrentSelectedPlayer.transform.position.z)
+		if (m_Football.GetComponent<Rigidbody>().transform.position.z > m_CurrentSelectedPlayer.GetComponent<Rigidbody>().transform.position.z)
 		{
 			// the ball is on front of the player so don't suck the ball in (we want it to go forward)
-			attractRepelValue = -0.5f;
+			attractRepelValue = -0.75f;
 			// return;
 		}
 
-		Vector3 diff = m_Football.transform.position - m_CurrentSelectedPlayer.transform.position;
+		Vector3 diff = m_Football.GetComponent<Rigidbody>().transform.position - m_CurrentSelectedPlayer.GetComponent<Rigidbody>().transform.position;
 
 		float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
 
-		if (magSqrAbs < 40)
+		if (magSqrAbs < 50)
 		{
 			// suck the ball gently towards the player
 			Rigidbody rb = m_Football.GetComponent<Rigidbody>();
@@ -290,7 +334,7 @@ public class GameManager : MonoBehaviour
 			}
 
 			// if the current player is too far away from the ball then select a new player
-			Vector3 diff = m_Football.transform.position - m_CurrentSelectedPlayer.transform.position;
+			Vector3 diff = m_Football.GetComponent<Rigidbody>().transform.position - m_CurrentSelectedPlayer.GetComponent<Rigidbody>().transform.position;
 
 			float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
 
@@ -306,20 +350,23 @@ public class GameManager : MonoBehaviour
 						continue;
 					}
 
-					Vector3 diffP = m_Football.transform.position - p.transform.position;
+					Vector3 diffP = m_Football.GetComponent<Rigidbody>().transform.position - p.GetComponent<Rigidbody>().transform.position;
 
 					float magSqrAbsP = Mathf.Abs (diffP.sqrMagnitude);
 
 					if (smallestDistance == -1 ||
 						magSqrAbsP < smallestDistance)
 					{
+						Vector3 velocityBeforeSwitch = m_CurrentSelectedPlayer.GetComponent<Rigidbody> ().velocity;
+
 						m_CurrentSelectedPlayer.SetPlayerControlled (false);
 						smallestDistance = magSqrAbsP;
 						m_CurrentSelectedPlayer = p;
 						m_CurrentSelectedPlayer.SetPlayerControlled (true);
 						diffP.Normalize ();
-						m_CurrentSelectedPlayer.SetDirection (diffP.x, diffP.y);
-						m_CurrentSelectedPlayer.GetComponent<Rigidbody> ().AddForce (diffP * 2.0f, ForceMode.Impulse);
+
+						// m_CurrentSelectedPlayer.GetComponent<Rigidbody> ().velocity = velocityBeforeSwitch;
+						// m_CurrentSelectedPlayer.SetDirection (diffP.x, diffP.y);
 
 						m_TimeLeftUntilCanSwitchPlayer = 6.0f;
 					}
@@ -336,21 +383,24 @@ public class GameManager : MonoBehaviour
 			{
 				// move towards initial position
 				Vector3 moveToPos = p.GetInitialPosition();
-				moveToPos.y = p.transform.position.y;
-				Vector3 pos = Vector3.MoveTowards(p.transform.position, moveToPos, 0.1f);
+				moveToPos.y = p.transform.GetComponent<Rigidbody>().position.y;
+				Vector3 pos = Vector3.MoveTowards(p.transform.GetComponent<Rigidbody>().position, moveToPos, 0.1f);
 
-				p.transform.position = pos;
+				p.transform.GetComponent<Rigidbody>().position = pos;
 			}
 		}
 
 		foreach (FootballPlayer p in mOppositionTeam) 
 		{
-			// move towards initial position
-			Vector3 moveToPos = p.GetInitialPosition();
-			moveToPos.y = p.transform.position.y;
-			Vector3 pos = Vector3.MoveTowards(p.transform.position, moveToPos, 0.1f);
+			if (p != m_CurrentOppositionPlayer)
+			{
+				// move towards initial position
+				Vector3 moveToPos = p.GetInitialPosition();
+				moveToPos.y = p.transform.GetComponent<Rigidbody>().position.y;
+				Vector3 pos = Vector3.MoveTowards(p.transform.GetComponent<Rigidbody>().position, moveToPos, 0.1f);
 
-			p.transform.position = pos;
+				p.transform.GetComponent<Rigidbody>().position = pos;
+			}
 		}
 	}
 
@@ -366,14 +416,14 @@ public class GameManager : MonoBehaviour
 		else
 		{
 			// if the current player is too far away from the ball then select a new player
-			Vector3 diff = m_Football.transform.position - m_CurrentOppositionPlayer.transform.position;
+			Vector3 diff = m_Football.GetComponent<Rigidbody>().transform.position - m_CurrentOppositionPlayer.GetComponent<Rigidbody>().transform.position;
 
 			float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
 
 			diff.Normalize ();
 			m_CurrentOppositionPlayer.SetDirection (diff.x, diff.z);
 
-			if (magSqrAbs > 35) 
+			if (magSqrAbs > 100) 
 			{
 				// pick new player
 				float smallestDistance = -1.0f;
@@ -385,17 +435,19 @@ public class GameManager : MonoBehaviour
 						continue;
 					}
 
-					Vector3 diffP = m_Football.transform.position - p.transform.position;
+					Vector3 diffP = m_Football.GetComponent<Rigidbody>().transform.position - p.GetComponent<Rigidbody>().transform.position;
 
 					float magSqrAbsP = Mathf.Abs (diffP.sqrMagnitude);
 
 					if (smallestDistance == -1 ||
 						magSqrAbsP < smallestDistance)
 					{
+						Vector3 velocityBeforeSwitch = m_CurrentOppositionPlayer.GetComponent<Rigidbody> ().velocity;
 						m_CurrentOppositionPlayer.SetIsAIControlled (false);
 						smallestDistance = magSqrAbsP;
 						m_CurrentOppositionPlayer = p;
 						m_CurrentOppositionPlayer.SetIsAIControlled (true);
+						m_CurrentOppositionPlayer.GetComponent<Rigidbody> ().velocity = velocityBeforeSwitch;
 					}
 				}
 			}
