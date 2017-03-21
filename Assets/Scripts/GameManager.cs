@@ -91,7 +91,9 @@ public class GameManager : MonoBehaviour
 
 		UpdateCurrentPlayer ();
 
-		UpdateAI ();
+		UpdateCurrentOppositionPlayer ();
+
+		UpdateAIPositions ();
 	}
 
 	void TakeInput()
@@ -286,7 +288,7 @@ public class GameManager : MonoBehaviour
 		}	
 	}
 
-	void UpdateAI()
+	void UpdateAIPositions()
 	{
 		foreach (FootballPlayer p in mFriendlyTeam) 
 		{
@@ -310,5 +312,10 @@ public class GameManager : MonoBehaviour
 
 			p.transform.position = pos;
 		}
+	}
+
+	void UpdateCurrentOppositionPlayer()
+	{
+		// TODO: 
 	}
 }
