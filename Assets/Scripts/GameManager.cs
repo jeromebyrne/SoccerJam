@@ -12,6 +12,8 @@ public class GameManager : MonoBehaviour
 	private float m_CameraYOffset = 15.0f;
 	private float m_TimeLeftUntilCanSwitchPlayer = 3.0f;
 
+	private float m_TimeLeftUntilCanSwitchAI = 4.0f;
+
 	private bool m_IsSetup = false;
 	private FootballPlayer m_CurrentSelectedPlayer = null;
 	private FootballPlayer m_CurrentOppositionPlayer = null;
@@ -19,10 +21,40 @@ public class GameManager : MonoBehaviour
 	List<FootballPlayer> mFriendlyTeam = new List<FootballPlayer>();
 	List<FootballPlayer> mOppositionTeam = new List<FootballPlayer>();
 
-	const float kShootHoldMinTime = 0.3f;
-	const float kShootHoldMaxTime = 1.5f;
+	const float kShootHoldMinTime = 0.25f;
+	const float kShootHoldMaxTime = 1.2f;
 
 	private float m_TimePressedDown = 0.0f;
+
+	private int m_FriendlyScore = 0;
+	private int m_OppositionScore = 0;
+
+	private bool m_IsInGoalScoredCooldown = false;
+	private float m_timeUntilScoreCooldownFinished = 0.0f;
+
+	public bool IsInGoalScoredCooldown() {
+		return m_IsInGoalScoredCooldown;
+	}
+
+	public int GetFriendlyScore() {
+		return m_FriendlyScore;
+	}
+
+	public int GetOppositionScore() {
+		return m_OppositionScore;
+	}
+
+	public void ScoreGoal(bool oppositionTeamScored)
+	{
+		m_IsInGoalScoredCooldown = true;
+		m_timeUntilScoreCooldownFinished = 8.0f;
+
+		if (oppositionTeamScored) {
+			++m_OppositionScore;
+		} else {
+			++m_FriendlyScore;
+		}
+	}
 
 	public static GameManager Instance
 	{
@@ -74,6 +106,18 @@ public class GameManager : MonoBehaviour
 			DoSetup ();
 			m_IsSetup = true;
 			return;
+		}
+
+		if (m_IsInGoalScoredCooldown)
+		{
+			m_timeUntilScoreCooldownFinished -= Time.deltaTime;
+
+			if (m_timeUntilScoreCooldownFinished <= 0.0f)
+			{
+				m_IsInGoalScoredCooldown = false;
+
+				m_Football.GetComponent<Rigidbody> ().transform.position = m_Football.m_InitialPosition;
+			}
 		}
 
 		if (mFriendlyTeam.Count == 0 || mOppositionTeam.Count == 0)
@@ -179,7 +223,7 @@ public class GameManager : MonoBehaviour
 
 				if (magSqrAbs < 15)
 				{
-					ShootBall(10.0f * percentageForce, m_CurrentSelectedPlayer.GetComponent<Rigidbody>().transform.forward);
+					ShootBall(12.0f * percentageForce, m_CurrentSelectedPlayer.GetComponent<Rigidbody>().transform.forward);
 
 					m_TimeLeftUntilCanSwitchPlayer = 0.0f;
 				}
@@ -368,7 +412,7 @@ public class GameManager : MonoBehaviour
 						// m_CurrentSelectedPlayer.GetComponent<Rigidbody> ().velocity = velocityBeforeSwitch;
 						// m_CurrentSelectedPlayer.SetDirection (diffP.x, diffP.y);
 
-						m_TimeLeftUntilCanSwitchPlayer = 6.0f;
+						m_TimeLeftUntilCanSwitchPlayer = 3.0f;
 					}
 				}
 			}
@@ -406,6 +450,11 @@ public class GameManager : MonoBehaviour
 
 	void UpdateCurrentOppositionPlayer()
 	{
+		if (m_TimeLeftUntilCanSwitchAI > 0.0f)
+		{
+			m_TimeLeftUntilCanSwitchAI -= Time.deltaTime;
+		}
+
 		if (!m_CurrentOppositionPlayer) {
 			m_CurrentOppositionPlayer = GetClosestOppositionPlayerToBall ();
 
@@ -415,6 +464,11 @@ public class GameManager : MonoBehaviour
 		} 
 		else
 		{
+			if (m_TimeLeftUntilCanSwitchAI > 0.0f)
+			{
+				return;
+			}
+
 			// if the current player is too far away from the ball then select a new player
 			Vector3 diff = m_Football.GetComponent<Rigidbody>().transform.position - m_CurrentOppositionPlayer.GetComponent<Rigidbody>().transform.position;
 
@@ -440,7 +494,7 @@ public class GameManager : MonoBehaviour
 					float magSqrAbsP = Mathf.Abs (diffP.sqrMagnitude);
 
 					if (smallestDistance == -1 ||
-						magSqrAbsP < smallestDistance)
+						(magSqrAbsP < smallestDistance && (magSqrAbs - magSqrAbsP) > 100))
 					{
 						Vector3 velocityBeforeSwitch = m_CurrentOppositionPlayer.GetComponent<Rigidbody> ().velocity;
 						m_CurrentOppositionPlayer.SetIsAIControlled (false);
@@ -448,6 +502,8 @@ public class GameManager : MonoBehaviour
 						m_CurrentOppositionPlayer = p;
 						m_CurrentOppositionPlayer.SetIsAIControlled (true);
 						m_CurrentOppositionPlayer.GetComponent<Rigidbody> ().velocity = velocityBeforeSwitch;
+
+						m_TimeLeftUntilCanSwitchAI = 3.0f; 
 					}
 				}
 			}

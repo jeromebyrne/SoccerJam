@@ -12,8 +12,6 @@ public class FootballPlayerSpawner : MonoBehaviour {
 
 	public Material m_OppositionMaterial = null;
 
-	private bool mHasDoneSetup = false;
-
 	// Use this for initialization
 	void Start () 
 	{

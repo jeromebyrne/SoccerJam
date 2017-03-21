@@ -31,7 +31,7 @@ public class FootballPlayer : MonoBehaviour
 		{
 			if (m_RigidBody) 
 			{
-				m_RigidBody.transform.forward = Vector3.RotateTowards (m_RigidBody.transform.forward, m_DesiredDirection, 0.1f, 0.75f);
+				m_RigidBody.transform.forward = Vector3.RotateTowards (m_RigidBody.transform.forward, m_DesiredDirection, 0.1f, 1.1f);
 
 				if (m_RigidBody.velocity.sqrMagnitude < (mIsFriendlyTeamPlayer ? 90.0f : 20.0f))
 				{
@@ -85,7 +85,9 @@ public class FootballPlayer : MonoBehaviour
 		} else {
 			m_CurrentSpeed = kOppositionSpeed;
 
-			GetComponent<Rigidbody> ().mass = 80.0f;
+			// GetComponent<Rigidbody> ().mass = 80.0f;
+
+			// GetComponent<Rigidbody>().transform.localScale = new Vector3 (1, 1, 1);
 		}
 	}
 
