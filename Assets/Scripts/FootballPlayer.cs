@@ -10,6 +10,7 @@ public class FootballPlayer : MonoBehaviour
 	float mTimeUntilCanImpulse = 0.1f;
 	private bool mIsPlayerControlled = true;
 	private bool mIsFriendlyTeamPlayer = true;
+	private Vector3 m_InitialPosition;
 
 	void Start () 
 	{
@@ -48,6 +49,17 @@ public class FootballPlayer : MonoBehaviour
 				}
 			}
 		}
+	}
+
+
+	public void SetInitialPosition (Vector3 initialPos)
+	{
+		m_InitialPosition = initialPos;
+	}
+
+	public Vector3 GetInitialPosition()
+	{
+		return m_InitialPosition;
 	}
 
 	public void SetPlayerControlled(bool value)

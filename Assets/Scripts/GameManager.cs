@@ -90,6 +90,8 @@ public class GameManager : MonoBehaviour
 		ApplyBallControlAid ();
 
 		UpdateCurrentPlayer ();
+
+		UpdateAI ();
 	}
 
 	void TakeInput()
@@ -282,5 +284,31 @@ public class GameManager : MonoBehaviour
 				}
 			}
 		}	
+	}
+
+	void UpdateAI()
+	{
+		foreach (FootballPlayer p in mFriendlyTeam) 
+		{
+			if (p != m_CurrentSelectedPlayer)
+			{
+				// move towards initial position
+				Vector3 moveToPos = p.GetInitialPosition();
+				moveToPos.y = p.transform.position.y;
+				Vector3 pos = Vector3.MoveTowards(p.transform.position, moveToPos, 0.1f);
+
+				p.transform.position = pos;
+			}
+		}
+
+		foreach (FootballPlayer p in mOppositionTeam) 
+		{
+			// move towards initial position
+			Vector3 moveToPos = p.GetInitialPosition();
+			moveToPos.y = p.transform.position.y;
+			Vector3 pos = Vector3.MoveTowards(p.transform.position, moveToPos, 0.1f);
+
+			p.transform.position = pos;
+		}
 	}
 }

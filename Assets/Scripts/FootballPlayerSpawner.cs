@@ -35,6 +35,7 @@ public class FootballPlayerSpawner : MonoBehaviour {
 			m_SpawnedPlayer.transform.position = transform.position;
 			m_SpawnedPlayer.SetPlayerControlled (false);
 			m_SpawnedPlayer.SetIsFriendlyTeamPlayer (m_IsFriendlyTeamPlayerSpawner);
+			m_SpawnedPlayer.SetInitialPosition (transform.position);
 
 			if (!m_IsFriendlyTeamPlayerSpawner)
 			{
