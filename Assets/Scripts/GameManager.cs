@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour
 
 	private bool m_IsSetup = false;
 	private FootballPlayer m_CurrentSelectedPlayer = null;
+	private FootballPlayer m_CurrentOppositionPlayer = null;
 
 	List<FootballPlayer> mFriendlyTeam = new List<FootballPlayer>();
 	List<FootballPlayer> mOppositionTeam = new List<FootballPlayer>();
@@ -80,6 +81,13 @@ public class GameManager : MonoBehaviour
 			if (m_CurrentSelectedPlayer)
 			{
 				m_CurrentSelectedPlayer.SetPlayerControlled (true);
+			}
+
+			m_CurrentOppositionPlayer = GetClosestOppositionPlayerToBall ();
+
+			if (m_CurrentOppositionPlayer)
+			{
+				m_CurrentOppositionPlayer.SetIsAIControlled (true);
 			}
 		}
 
@@ -194,6 +202,33 @@ public class GameManager : MonoBehaviour
 		return selectedPlayer;
 	}
 
+	FootballPlayer GetClosestOppositionPlayerToBall()
+	{
+		if (m_Football == null)
+		{
+			return null;
+		}
+
+		float smallestDistance = -1.0f;
+		FootballPlayer selectedPlayer = null;
+
+		foreach (FootballPlayer p in mOppositionTeam)
+		{
+			Vector3 diff = m_Football.transform.position - p.transform.position;
+
+			float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
+
+			if (smallestDistance == -1 ||
+				magSqrAbs < smallestDistance)
+			{
+				smallestDistance = magSqrAbs;
+				selectedPlayer = p;
+			}
+		}
+
+		return selectedPlayer;
+	}
+
 	void ApplyBallControlAid()
 	{
 		if (m_CurrentSelectedPlayer == null)
@@ -206,17 +241,19 @@ public class GameManager : MonoBehaviour
 			return;
 		}
 
-		if (m_Football.transform.position.z - 8 > m_CurrentSelectedPlayer.transform.position.z)
+		float attractRepelValue = -1.5f;
+		if (m_Football.transform.position.z > m_CurrentSelectedPlayer.transform.position.z)
 		{
 			// the ball is on front of the player so don't suck the ball in (we want it to go forward)
-			return;
+			attractRepelValue = -0.5f;
+			// return;
 		}
 
 		Vector3 diff = m_Football.transform.position - m_CurrentSelectedPlayer.transform.position;
 
 		float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
 
-		if (magSqrAbs < 100)
+		if (magSqrAbs < 40)
 		{
 			// suck the ball gently towards the player
 			Rigidbody rb = m_Football.GetComponent<Rigidbody>();
@@ -224,7 +261,7 @@ public class GameManager : MonoBehaviour
 			if (rb)
 			{
 				diff.Normalize ();
-				rb.AddForce (diff * -0.5f);
+				rb.AddForce (diff * attractRepelValue);
 
 				// rb.transform.forward = Vector3.RotateTowards (rb.transform.forward, m_CurrentSelectedPlayer.transform.forward, 1.0f, 1.0f);
 			}
@@ -280,8 +317,11 @@ public class GameManager : MonoBehaviour
 						smallestDistance = magSqrAbsP;
 						m_CurrentSelectedPlayer = p;
 						m_CurrentSelectedPlayer.SetPlayerControlled (true);
+						diffP.Normalize ();
+						m_CurrentSelectedPlayer.SetDirection (diffP.x, diffP.y);
+						m_CurrentSelectedPlayer.GetComponent<Rigidbody> ().AddForce (diffP * 2.0f, ForceMode.Impulse);
 
-						m_TimeLeftUntilCanSwitchPlayer = 3.0f;
+						m_TimeLeftUntilCanSwitchPlayer = 6.0f;
 					}
 				}
 			}
@@ -316,6 +356,49 @@ public class GameManager : MonoBehaviour
 
 	void UpdateCurrentOppositionPlayer()
 	{
-		// TODO: 
+		if (!m_CurrentOppositionPlayer) {
+			m_CurrentOppositionPlayer = GetClosestOppositionPlayerToBall ();
+
+			if (m_CurrentOppositionPlayer) {
+				m_CurrentOppositionPlayer.SetIsAIControlled (true);
+			}
+		} 
+		else
+		{
+			// if the current player is too far away from the ball then select a new player
+			Vector3 diff = m_Football.transform.position - m_CurrentOppositionPlayer.transform.position;
+
+			float magSqrAbs = Mathf.Abs (diff.sqrMagnitude);
+
+			diff.Normalize ();
+			m_CurrentOppositionPlayer.SetDirection (diff.x, diff.z);
+
+			if (magSqrAbs > 35) 
+			{
+				// pick new player
+				float smallestDistance = -1.0f;
+
+				foreach (FootballPlayer p in mOppositionTeam)
+				{
+					if (p == m_CurrentOppositionPlayer)
+					{
+						continue;
+					}
+
+					Vector3 diffP = m_Football.transform.position - p.transform.position;
+
+					float magSqrAbsP = Mathf.Abs (diffP.sqrMagnitude);
+
+					if (smallestDistance == -1 ||
+						magSqrAbsP < smallestDistance)
+					{
+						m_CurrentOppositionPlayer.SetIsAIControlled (false);
+						smallestDistance = magSqrAbsP;
+						m_CurrentOppositionPlayer = p;
+						m_CurrentOppositionPlayer.SetIsAIControlled (true);
+					}
+				}
+			}
+		}	
 	}
 }

@@ -8,9 +8,13 @@ public class FootballPlayer : MonoBehaviour
 	private Rigidbody m_RigidBody = null;
 	bool mCanImpulseOnDirectionChange = true;
 	float mTimeUntilCanImpulse = 0.1f;
-	private bool mIsPlayerControlled = true;
+	private bool mIsPlayerControlled = false;
+	private bool mIsAIControlled = false;
 	private bool mIsFriendlyTeamPlayer = true;
 	private Vector3 m_InitialPosition;
+
+	private const float kPlayerSpeed = 500.0f;
+	private const float kOppositionSpeed = 100.0f;
 
 	void Start () 
 	{
@@ -18,18 +22,18 @@ public class FootballPlayer : MonoBehaviour
 		m_DesiredDirection.y = 0;
 		m_DesiredDirection.z = 1;
 
-		m_CurrentSpeed = 500.0f;
+		m_CurrentSpeed = kPlayerSpeed;
 	}
 
 	void Update() 
 	{
-		if (mIsPlayerControlled)
+		if (mIsPlayerControlled || mIsAIControlled)
 		{
 			if (m_RigidBody) 
 			{
 				m_RigidBody.transform.forward = Vector3.RotateTowards (m_RigidBody.transform.forward, m_DesiredDirection, 0.1f, 0.75f);
 
-				if (m_RigidBody.velocity.sqrMagnitude < 100.0f)
+				if (m_RigidBody.velocity.sqrMagnitude < (mIsFriendlyTeamPlayer ? 100.0f : 70.0f))
 				{
 					m_RigidBody.AddForce (m_RigidBody.transform.forward * m_CurrentSpeed);
 				}
@@ -67,9 +71,22 @@ public class FootballPlayer : MonoBehaviour
 		mIsPlayerControlled = value;
 	}
 
+	public void SetIsAIControlled (bool value)
+	{
+		mIsAIControlled = value;
+	}
+
 	public void SetIsFriendlyTeamPlayer (bool value)
 	{
 		mIsFriendlyTeamPlayer = value;
+
+		if (mIsFriendlyTeamPlayer) {
+			m_CurrentSpeed = kPlayerSpeed;
+		} else {
+			m_CurrentSpeed = kOppositionSpeed;
+
+			GetComponent<Rigidbody> ().mass = 35.0f;
+		}
 	}
 
 	public bool IsFriendlyTeamPlayer()
