@@ -8,6 +8,7 @@ public class UIScript : MonoBehaviour {
 	public Text m_GoalText = null;
 	public Text m_FriendlyText = null;
 	public Text m_OppositionText = null;
+	public Slider m_PowerSlider = null;
 
 	// Use this for initialization
 	void Start () {
@@ -20,5 +21,6 @@ public class UIScript : MonoBehaviour {
 		m_FriendlyText.text = GameManager.Instance.GetFriendlyScore ().ToString ();
 		m_OppositionText.text = GameManager.Instance.GetOppositionScore ().ToString ();
 		m_GoalText.enabled = GameManager.Instance.IsInGoalScoredCooldown ();
+		m_PowerSlider.value = GameManager.Instance.GetPowerMeterValue();
 	}
 }

@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
 	const float kShootHoldMinTime = 0.25f;
 	const float kShootHoldMaxTime = 1.2f;
 
-	private float m_TimePressedDown = 0.0f;
+	private float m_TimePressedDown = -1.0f;
 
 	private int m_FriendlyScore = 0;
 	private int m_OppositionScore = 0;
@@ -66,6 +66,30 @@ public class GameManager : MonoBehaviour
 			}
 			return m_Instance;
 		}
+	}
+
+	public float GetPowerMeterValue()
+	{
+		if (m_TimePressedDown < 0.0f)
+		{
+			return 0.0f;
+		}
+
+		float timeSincePressed = Time.time - m_TimePressedDown;
+
+		if (timeSincePressed > kShootHoldMinTime)
+		{
+			if (timeSincePressed > kShootHoldMaxTime)
+			{
+				return 1.0f;
+			}
+
+			float percentageForce = timeSincePressed / kShootHoldMaxTime;
+
+			return percentageForce;
+		}
+
+		return 0.0f;
 	}
 
 	void RebuildTeams()
@@ -228,6 +252,9 @@ public class GameManager : MonoBehaviour
 					m_TimeLeftUntilCanSwitchPlayer = 0.0f;
 				}
 			}
+
+			// this is so we can determine that we are not pressing down
+			m_TimePressedDown = -1.0f;
 		}
 	}
 
@@ -399,7 +426,7 @@ public class GameManager : MonoBehaviour
 					float magSqrAbsP = Mathf.Abs (diffP.sqrMagnitude);
 
 					if (smallestDistance == -1 ||
-						magSqrAbsP < smallestDistance)
+						(magSqrAbsP < smallestDistance && (magSqrAbs - magSqrAbsP) > 100))
 					{
 						Vector3 velocityBeforeSwitch = m_CurrentSelectedPlayer.GetComponent<Rigidbody> ().velocity;
 
@@ -409,10 +436,7 @@ public class GameManager : MonoBehaviour
 						m_CurrentSelectedPlayer.SetPlayerControlled (true);
 						diffP.Normalize ();
 
-						// m_CurrentSelectedPlayer.GetComponent<Rigidbody> ().velocity = velocityBeforeSwitch;
-						// m_CurrentSelectedPlayer.SetDirection (diffP.x, diffP.y);
-
-						m_TimeLeftUntilCanSwitchPlayer = 3.0f;
+						m_TimeLeftUntilCanSwitchPlayer = 5.0f;
 					}
 				}
 			}
